@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <meta name="description" content="A progressive web app for tracking personal expenses">
+    <meta name="theme-color" content="#4f46e5">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Accessibility -->
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- Meta tags for PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Expense Tracker">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">💰 Expense Tracker</h1>
+            <div class="nav-buttons">
+                <button id="dashboardBtn" class="nav-btn active">Dashboard</button>
+                <button id="addExpenseBtn" class="nav-btn">Add Expense</button>
+                <button id="historyBtn" class="nav-btn">History</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="connection-status offline">
+        <span id="connectionText">You're offline</span>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+        <!-- Dashboard View -->
+        <div id="dashboardView" class="view active">
+            <div class="dashboard-container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Expenses</h3>
+                        <p id="totalExpenses" class="stat-value">$0.00</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>This Month</h3>
+                        <p id="monthlyExpenses" class="stat-value">$0.00</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Categories</h3>
+                        <p id="categoryCount" class="stat-value">0</p>
+                    </div>
+                </div>
+                
+                <div class="recent-expenses">
+                    <h2>Recent Expenses</h2>
+                    <div id="recentExpensesList" class="expenses-list">
+                        <p class="no-data">No expenses yet. Add your first expense!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Expense View -->
+        <div id="addExpenseView" class="view">
+            <div class="form-container">
+                <h2>Add New Expense</h2>
+                <form id="expenseForm" class="expense-form">
+                    <div class="form-group">
+                        <label for="expenseAmount">Amount ($)</label>
+                        <input type="number" id="expenseAmount" step="0.01" min="0" required 
+                               aria-describedby="amount-help" aria-label="Enter expense amount in dollars">
+                        <small id="amount-help" class="help-text">Enter the amount you spent</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expenseDescription">Description</label>
+                        <input type="text" id="expenseDescription" required 
+                               aria-describedby="description-help" aria-label="Enter expense description">
+                        <small id="description-help" class="help-text">Describe what you spent money on</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expenseCategory">Category</label>
+                        <select id="expenseCategory" required aria-describedby="category-help" aria-label="Select expense category">
+                            <option value="">Select Category</option>
+                            <option value="food">🍔 Food & Dining</option>
+                            <option value="transport">🚗 Transportation</option>
+                            <option value="shopping">🛍️ Shopping</option>
+                            <option value="entertainment">🎬 Entertainment</option>
+                            <option value="bills">💡 Bills & Utilities</option>
+                            <option value="health">🏥 Healthcare</option>
+                            <option value="other">📦 Other</option>
+                        </select>
+                        <small id="category-help" class="help-text">Choose the category that best fits your expense</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expenseDate">Date</label>
+                        <input type="date" id="expenseDate" required 
+                               aria-describedby="date-help" aria-label="Select expense date">
+                        <small id="date-help" class="help-text">When did you make this expense?</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expenseLocation">Location (Optional)</label>
+                        <div class="location-input">
+                            <input type="text" id="expenseLocation" placeholder="Enter location or use GPS"
+                                   aria-describedby="location-help" aria-label="Enter expense location">
+                            <button type="button" id="getLocationBtn" class="location-btn" 
+                                    aria-label="Get current location using GPS">📍</button>
+                        </div>
+                        <small id="location-help" class="help-text">Where did you make this expense?</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="receiptPhoto">Receipt Photo (Optional)</label>
+                        <div class="photo-input">
+                            <input type="file" id="receiptPhoto" accept="image/*" capture="environment"
+                                   aria-describedby="photo-help" aria-label="Upload receipt photo">
+                            <label for="receiptPhoto" class="photo-btn">📷 Take Photo</label>
+                        </div>
+                        <small id="photo-help" class="help-text">Take a photo of your receipt</small>
+                        <div id="photoPreview" class="photo-preview" role="img" aria-label="Receipt photo preview"></div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Add Expense</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- History View -->
+        <div id="historyView" class="view">
+            <div class="history-container">
+                <div class="history-controls">
+                    <h2>Expense History</h2>
+                    <div class="filter-controls">
+                        <select id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <option value="food">🍔 Food & Dining</option>
+                            <option value="transport">🚗 Transportation</option>
+                            <option value="shopping">🛍️ Shopping</option>
+                            <option value="entertainment">🎬 Entertainment</option>
+                            <option value="bills">💡 Bills & Utilities</option>
+                            <option value="health">🏥 Healthcare</option>
+                            <option value="other">📦 Other</option>
+                        </select>
+                        <input type="date" id="dateFilter" placeholder="Filter by date">
+                    </div>
+                </div>
+                
+                <div id="expensesHistoryList" class="expenses-list">
+                    <p class="no-data">No expenses found.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Install Prompt -->
+    <div id="installPrompt" class="install-prompt">
+        <div class="install-content">
+            <h3>Install Expense Tracker</h3>
+            <p>Add this app to your home screen for quick access!</p>
+            <button id="installBtn" class="install-btn">Install</button>
+            <button id="dismissInstall" class="dismiss-btn">Not now</button>
+        </div>
+    </div>
+
+    <!-- Simple Install Button -->
+    <div class="simple-install">
+        <button id="simpleInstallBtn" class="simple-install-btn">📱 Install App</button>
+    </div>
+    
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/service-worker.js"></script>
+</body>
+</html>

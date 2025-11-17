@@ -1,0 +1,19 @@
+
+<svg width="152" height="152" viewBox="0 0 152 152" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <circle cx="76" cy="76" r="72" fill="url(#gradient)" stroke="#ffffff" stroke-width="2"/>
+  
+  <text x="76" y="85.5" font-family="Arial, sans-serif" font-size="60.8" font-weight="bold" text-anchor="middle" fill="white">$</text>
+  
+  <rect x="38" y="57" width="6.08" height="19" fill="white" opacity="0.8"/>
+  <rect x="57" y="50.66666666666667" width="6.08" height="25.333333333333332" fill="white" opacity="0.8"/>
+  <rect x="76" y="45.6" width="6.08" height="30.4" fill="white" opacity="0.8"/>
+  <rect x="95" y="50.66666666666667" width="6.08" height="25.333333333333332" fill="white" opacity="0.8"/>
+  <rect x="114" y="57" width="6.08" height="19" fill="white" opacity="0.8"/>
+</svg>

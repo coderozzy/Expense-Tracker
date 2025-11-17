@@ -1,0 +1,41 @@
+{
+  "name": "expense-tracker-pwa",
+  "version": "1.0.0",
+  "description": "A Progressive Web Application for tracking personal expenses with offline support and native device features",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 server.py",
+    "dev": "python3 server.py",
+    "serve": "npx serve . -p 8000",
+    "test": "echo 'Open test-pwa.html in browser to run tests'",
+    "build": "echo 'No build step required for static PWA'",
+    "deploy": "echo 'Deploy to your preferred hosting service'"
+  },
+  "keywords": [
+    "pwa",
+    "expense-tracker",
+    "progressive-web-app",
+    "offline",
+    "service-worker",
+    "indexeddb",
+    "geolocation",
+    "camera",
+    "responsive"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/expense-tracker-pwa.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/expense-tracker-pwa/issues"
+  },
+  "homepage": "https://github.com/yourusername/expense-tracker-pwa#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
