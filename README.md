@@ -162,13 +162,6 @@ expense-tracker/
 - **Safari**: Full support (iOS 11.3+)
 - **Edge**: Full support
 
-## 🚀 Deployment
-
-### GitHub Pages
-1. Push code to GitHub repository
-2. Enable GitHub Pages in repository settings
-3. Select source branch (usually `main`)
-4. Access via `https://username.github.io/repository-name`
 
 ### Netlify
 1. Connect GitHub repository to Netlify
@@ -236,41 +229,5 @@ Update CSS custom properties in `styles/main.css`:
 - Ensure HTTPS connection
 - Test on actual device (not localhost)
 
-#### Performance Issues
-- Check network tab in dev tools
-- Verify caching is working
-- Optimize images and assets
 
-## 📝 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📞 Support
-
-For issues and questions:
-- Create an issue in the GitHub repository
-- Check the troubleshooting section
-- Review browser console for errors
-
-## 🔮 Future Enhancements
-
-- **Data Export**: CSV/PDF export functionality
-- **Charts**: Visual expense analytics
-- **Budgeting**: Set and track budgets
-- **Multi-Currency**: Support for different currencies
-- **Backup**: Cloud backup and sync
-- **Dark Mode**: Theme switching
-- **Voice Input**: Speech-to-text for expense entry
-
----
-
-**Built with ❤️ using modern web technologies**
 
