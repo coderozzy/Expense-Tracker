@@ -1,14 +1,10 @@
-/**
- * Service Worker for Expense Tracker PWA
- * Implements offline functionality and caching strategies
- */
+
 
 const CACHE_NAME = 'expense-tracker-v1.0.7';
 const STATIC_CACHE = 'expense-tracker-static-v1.0.4';
 const DYNAMIC_CACHE = 'expense-tracker-dynamic-v1.0.4';
 const IMAGE_CACHE = 'expense-tracker-images-v1.0.4';
 
-// Static assets to cache immediately
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -23,19 +19,12 @@ const STATIC_ASSETS = [
     '/icons/icon-144x144.png'
 ];
 
-// Cache strategies for different resource types
 const CACHE_STRATEGIES = {
-    // Cache first strategy for static assets
     CACHE_FIRST: 'cache-first',
-    // Network first strategy for dynamic content
     NETWORK_FIRST: 'network-first',
-    // Stale while revalidate for frequently updated content
     STALE_WHILE_REVALIDATE: 'stale-while-revalidate'
 };
 
-/**
- * Install event - cache static assets
- */
 self.addEventListener('install', (event) => {
     console.log('Service Worker: Installing...');
     
@@ -55,9 +44,6 @@ self.addEventListener('install', (event) => {
     );
 });
 
-/**
- * Activate event - clean up old caches
- */
 self.addEventListener('activate', (event) => {
     console.log('Service Worker: Activating...');
     
@@ -66,7 +52,6 @@ self.addEventListener('activate', (event) => {
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames.map((cacheName) => {
-                        // Delete old caches that don't match current version
                         if (cacheName !== STATIC_CACHE && 
                             cacheName !== DYNAMIC_CACHE && 
                             cacheName !== IMAGE_CACHE) {
@@ -83,35 +68,27 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-/**
- * Fetch event - implement caching strategies
- */
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
     
-    // Skip non-GET requests
     if (request.method !== 'GET') {
         return;
     }
     
-    // Skip chrome-extension and other non-http requests
     if (!url.protocol.startsWith('http')) {
         return;
     }
     
-    // Only handle requests from our domain
     if (url.origin !== location.origin) {
         return;
     }
     
-        // For navigation requests, always try network first
         if (request.mode === 'navigate') {
             event.respondWith(handleNavigation(request));
             return;
         }
     
-    // Determine caching strategy based on request type
     if (isStaticAsset(request)) {
         event.respondWith(cacheFirstStrategy(request));
     } else if (isImageRequest(request)) {
@@ -123,12 +100,8 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
-    /**
-     * Handle navigation requests (page loads)
-     */
     async function handleNavigation(request) {
         try {
-            // Try network first
             const networkResponse = await fetch(request);
             if (networkResponse && networkResponse.status === 200) {
                 console.log('Service Worker: Serving network response for navigation');
@@ -138,14 +111,12 @@ self.addEventListener('fetch', (event) => {
             console.log('Service Worker: Network failed, trying cache');
         }
         
-        // Fallback to cache
         const cachedResponse = await caches.match('/index.html');
         if (cachedResponse) {
             console.log('Service Worker: Serving cached index.html');
             return cachedResponse;
         }
         
-        // Last resort - simple offline page
         return new Response(`
             <!DOCTYPE html>
             <html>
@@ -168,9 +139,6 @@ self.addEventListener('fetch', (event) => {
         });
     }
 
-/**
- * Check if request is for a static asset
- */
 function isStaticAsset(request) {
     const url = new URL(request.url);
     return url.pathname.endsWith('.css') ||
@@ -180,41 +148,28 @@ function isStaticAsset(request) {
            url.pathname === '/';
 }
 
-/**
- * Check if request is for an image
- */
 function isImageRequest(request) {
     const url = new URL(request.url);
     return url.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
 }
 
-/**
- * Check if request is for API data
- */
 function isAPIRequest(request) {
     const url = new URL(request.url);
     return url.pathname.startsWith('/api/') || 
            url.hostname.includes('api');
 }
 
-/**
- * Cache First Strategy - for static assets
- * Check cache first, fallback to network
- */
 async function cacheFirstStrategy(request) {
     try {
-        // Try to get from cache first
         const cachedResponse = await caches.match(request);
         if (cachedResponse) {
             console.log('Service Worker: Serving from cache (cache-first)', request.url);
             return cachedResponse;
         }
         
-        // If not in cache, try network
         console.log('Service Worker: Not in cache, fetching from network', request.url);
         const networkResponse = await fetch(request);
         
-        // If network request successful, cache it
         if (networkResponse && networkResponse.status === 200) {
             const cache = await caches.open(STATIC_CACHE);
             cache.put(request, networkResponse.clone());
@@ -225,7 +180,6 @@ async function cacheFirstStrategy(request) {
     } catch (error) {
         console.error('Service Worker: Cache first strategy failed', error);
         
-        // For navigation requests, return cached index.html
         if (request.mode === 'navigate') {
             const cachedIndex = await caches.match('/index.html');
             if (cachedIndex) {
@@ -241,10 +195,6 @@ async function cacheFirstStrategy(request) {
     }
 }
 
-/**
- * Network First Strategy - for API requests
- * Try network first, fallback to cache
- */
 async function networkFirstStrategy(request) {
     try {
         const networkResponse = await fetch(request);
@@ -263,7 +213,6 @@ async function networkFirstStrategy(request) {
             return cachedResponse;
         }
         
-        // Return offline page for navigation requests
         if (request.mode === 'navigate') {
             const cachedIndex = await caches.match('/index.html');
             if (cachedIndex) {
@@ -279,10 +228,6 @@ async function networkFirstStrategy(request) {
     }
 }
 
-/**
- * Stale While Revalidate Strategy - for frequently updated content
- * Return cached version immediately, update cache in background
- */
 async function staleWhileRevalidateStrategy(request) {
     const cache = await caches.open(DYNAMIC_CACHE);
     const cachedResponse = await cache.match(request);
@@ -293,18 +238,12 @@ async function staleWhileRevalidateStrategy(request) {
         }
         return networkResponse;
     }).catch(() => {
-        // Network failed, return cached version if available
         return cachedResponse;
     });
     
-    // Return cached version immediately if available, otherwise wait for network
     return cachedResponse || fetchPromise;
 }
 
-/**
- * Image Cache Strategy - optimized for images
- * Cache images with size limits and expiration
- */
 async function imageCacheStrategy(request) {
     try {
         const cachedResponse = await caches.match(request);
@@ -317,12 +256,10 @@ async function imageCacheStrategy(request) {
         if (networkResponse.ok) {
             const cache = await caches.open(IMAGE_CACHE);
             
-            // Check cache size before adding new images
             const cacheSize = await getCacheSize(IMAGE_CACHE);
-            if (cacheSize < 50 * 1024 * 1024) { // 50MB limit
+            if (cacheSize < 50 * 1024 * 1024) { 
                 cache.put(request, networkResponse.clone());
             } else {
-                // Clean old images if cache is full
                 await cleanImageCache();
                 cache.put(request, networkResponse.clone());
             }
@@ -338,9 +275,6 @@ async function imageCacheStrategy(request) {
     }
 }
 
-/**
- * Get cache size in bytes
- */
 async function getCacheSize(cacheName) {
     const cache = await caches.open(cacheName);
     const keys = await cache.keys();
@@ -357,14 +291,10 @@ async function getCacheSize(cacheName) {
     return size;
 }
 
-/**
- * Clean old images from cache
- */
 async function cleanImageCache() {
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
     
-    // Remove oldest 25% of images
     const keysToDelete = keys.slice(0, Math.floor(keys.length * 0.25));
     
     for (const key of keysToDelete) {
@@ -374,9 +304,6 @@ async function cleanImageCache() {
     console.log('Service Worker: Cleaned old images from cache');
 }
 
-/**
- * Background Sync for offline data
- */
 self.addEventListener('sync', (event) => {
     console.log('Service Worker: Background sync triggered', event.tag);
     
@@ -385,25 +312,17 @@ self.addEventListener('sync', (event) => {
     }
 });
 
-/**
- * Sync offline expenses when connection is restored
- */
 async function syncExpenses() {
     try {
-        // Get offline expenses from IndexedDB
         const offlineExpenses = await getOfflineExpenses();
         
         if (offlineExpenses.length > 0) {
             console.log('Service Worker: Syncing offline expenses', offlineExpenses.length);
             
-            // In a real app, you would send these to your server
-            // For this demo, we'll just log them
             for (const expense of offlineExpenses) {
                 console.log('Syncing expense:', expense);
-                // await fetch('/api/expenses', { method: 'POST', body: JSON.stringify(expense) });
             }
             
-            // Clear offline expenses after successful sync
             await clearOfflineExpenses();
         }
     } catch (error) {
@@ -411,9 +330,6 @@ async function syncExpenses() {
     }
 }
 
-/**
- * Get offline expenses from IndexedDB
- */
 async function getOfflineExpenses() {
     return new Promise((resolve) => {
         const request = indexedDB.open('ExpenseTrackerDB', 1);
@@ -433,9 +349,6 @@ async function getOfflineExpenses() {
     });
 }
 
-/**
- * Clear offline expenses from IndexedDB
- */
 async function clearOfflineExpenses() {
     return new Promise((resolve) => {
         const request = indexedDB.open('ExpenseTrackerDB', 1);
@@ -462,9 +375,6 @@ async function clearOfflineExpenses() {
     });
 }
 
-/**
- * Push notification handling
- */
 self.addEventListener('push', (event) => {
     console.log('Service Worker: Push notification received');
     
@@ -496,9 +406,6 @@ self.addEventListener('push', (event) => {
     );
 });
 
-/**
- * Notification click handling
- */
 self.addEventListener('notificationclick', (event) => {
     console.log('Service Worker: Notification clicked');
     
@@ -511,9 +418,6 @@ self.addEventListener('notificationclick', (event) => {
     }
 });
 
-/**
- * Message handling from main thread
- */
 self.addEventListener('message', (event) => {
     console.log('Service Worker: Message received', event.data);
     
@@ -527,7 +431,6 @@ self.addEventListener('message', (event) => {
     }
 });
 
-// Handle service worker activation
 self.addEventListener('activate', (event) => {
     console.log('Service Worker: Activating new version');
     event.waitUntil(

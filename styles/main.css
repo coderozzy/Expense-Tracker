@@ -1,4 +1,4 @@
-/* Reset and Base Styles */
+
 * {
     margin: 0;
     padding: 0;
@@ -13,7 +13,6 @@ body {
     min-height: 100vh;
 }
 
-/* Navigation */
 .navbar {
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     color: white;
@@ -74,7 +73,6 @@ body {
     font-weight: 600;
 }
 
-/* Connection Status */
 .connection-status {
     padding: 0.5rem 1rem;
     text-align: center;
@@ -92,14 +90,12 @@ body {
     color: white;
 }
 
-/* Main Content */
 .main-content {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1rem;
 }
 
-/* Views */
 .view {
     display: none;
     animation: fadeIn 0.3s ease-in-out;
@@ -114,7 +110,6 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Dashboard Styles */
 .dashboard-container {
     display: flex;
     flex-direction: column;
@@ -172,7 +167,6 @@ body {
     font-size: 1.25rem;
 }
 
-/* Form Styles */
 .form-container {
     max-width: 600px;
     margin: 0 auto;
@@ -297,7 +291,6 @@ body {
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-/* History Styles */
 .history-container {
     background: white;
     padding: 1.5rem;
@@ -334,7 +327,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* Expense List Styles */
 .expenses-list {
     display: flex;
     flex-direction: column;
@@ -397,7 +389,6 @@ body {
     padding: 2rem;
 }
 
-/* Install Prompt */
 .install-prompt {
     position: fixed;
     bottom: 1rem;
@@ -469,7 +460,6 @@ body {
     color: #374151;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .nav-container {
         flex-direction: column;
@@ -555,7 +545,6 @@ body {
     }
 }
 
-/* Loading States */
 .loading {
     opacity: 0.6;
     pointer-events: none;
@@ -580,7 +569,6 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Success/Error Messages */
 .message {
     padding: 1rem;
     border-radius: 8px;
@@ -600,7 +588,6 @@ body {
     border: 1px solid #fca5a5;
 }
 
-/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
@@ -609,7 +596,6 @@ body {
     }
 }
 
-/* Focus styles for keyboard navigation */
 button:focus,
 input:focus,
 select:focus {
@@ -617,7 +603,6 @@ select:focus {
     outline-offset: 2px;
 }
 
-/* Touch-friendly styles for mobile */
 * {
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -636,14 +621,12 @@ input, textarea, select {
     user-select: text;
 }
 
-/* Ensure buttons are large enough for touch */
 button, .nav-btn, .btn {
     min-height: 44px;
     min-width: 44px;
     touch-action: manipulation;
 }
 
-/* Remove hover effects on touch devices */
 @media (hover: none) and (pointer: coarse) {
     .nav-btn:hover {
         background: rgba(255, 255, 255, 0.2);
@@ -656,7 +639,6 @@ button, .nav-btn, .btn {
     }
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
     .stat-card,
     .form-container,
@@ -671,7 +653,6 @@ button, .nav-btn, .btn {
     }
 }
 
-/* Photo display styles */
 .expense-photo {
     margin-top: 0.5rem;
 }
@@ -691,7 +672,6 @@ button, .nav-btn, .btn {
     border-color: #4f46e5;
 }
 
-/* Photo modal styles */
 .photo-modal {
     display: none;
     position: fixed;
@@ -736,7 +716,6 @@ button, .nav-btn, .btn {
     color: #4f46e5;
 }
 
-/* Responsive photo modal */
 @media (max-width: 768px) {
     .photo-modal-content {
         margin: 10% auto;
@@ -755,7 +734,6 @@ button, .nav-btn, .btn {
     }
 }
 
-/* Simple Install Button */
 .simple-install {
     position: fixed;
     top: 1rem;
@@ -788,7 +766,6 @@ button, .nav-btn, .btn {
     transform: translateY(-1px);
 }
 
-/* Show on all devices */
 @media (max-width: 768px) {
     .simple-install-btn {
         padding: 0.8rem 1.2rem;
@@ -796,7 +773,6 @@ button, .nav-btn, .btn {
     }
 }
 
-/* Accessibility Help Text */
 .help-text {
     display: block;
     font-size: 0.875rem;
@@ -804,8 +780,6 @@ button, .nav-btn, .btn {
     margin-top: 0.25rem;
 }
 
-
-/* Install Instructions Modal */
 .install-instructions-modal {
     position: fixed;
     top: 0;

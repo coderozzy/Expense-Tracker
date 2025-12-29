@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Simple HTTP server for testing the Expense Tracker PWA
-Run with: python3 server.py
-"""
 
 import http.server
 import socketserver
@@ -12,12 +8,11 @@ from urllib.parse import urlparse
 
 class PWAHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        # Add headers for PWA support
+
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         self.send_header('Pragma', 'no-cache')
         self.send_header('Expires', '0')
-        
-        # Add CORS headers for development
+
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
@@ -25,15 +20,14 @@ class PWAHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
     
     def do_GET(self):
-        # Handle SPA routing - serve index.html for all routes
+
         if self.path == '/' or not os.path.exists(self.path[1:]):
             self.path = '/index.html'
         return super().do_GET()
 
 def main(port=8000):
     PORT = port
-    
-    # Check if port is available
+
     try:
         with socketserver.TCPServer(("", PORT), PWAHandler) as httpd:
             print(f"🚀 Expense Tracker PWA Server")
@@ -50,7 +44,7 @@ def main(port=8000):
             
             httpd.serve_forever()
     except OSError as e:
-        if e.errno == 48:  # Address already in use
+        if e.errno == 48:
             print(f"❌ Port {PORT} is already in use. Try a different port.")
             print(f"💡 You can specify a different port: python3 server.py {PORT + 1}")
         else:

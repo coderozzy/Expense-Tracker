@@ -6,29 +6,24 @@
     <title>Expense Tracker</title>
     <meta name="description" content="A progressive web app for tracking personal expenses">
     <meta name="theme-color" content="#4f46e5">
-    
-    <!-- PWA Manifest -->
+
     <link rel="manifest" href="manifest.json">
-    
-    <!-- Icons -->
+
     <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    
-    <!-- Accessibility -->
+
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    
-    <!-- Styles -->
+
     <link rel="stylesheet" href="styles/main.css">
-    
-    <!-- Meta tags for PWA -->
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Expense Tracker">
 </head>
 <body>
-    <!-- Navigation -->
+    
     <nav class="navbar">
         <div class="nav-container">
             <h1 class="nav-title">💰 Expense Tracker</h1>
@@ -40,14 +35,12 @@
         </div>
     </nav>
 
-    <!-- Connection Status -->
     <div id="connectionStatus" class="connection-status offline">
         <span id="connectionText">You're offline</span>
     </div>
 
-    <!-- Main Content Container -->
     <main class="main-content">
-        <!-- Dashboard View -->
+        
         <div id="dashboardView" class="view active">
             <div class="dashboard-container">
                 <div class="stats-grid">
@@ -74,7 +67,6 @@
             </div>
         </div>
 
-        <!-- Add Expense View -->
         <div id="addExpenseView" class="view">
             <div class="form-container">
                 <h2>Add New Expense</h2>
@@ -142,7 +134,6 @@
             </div>
         </div>
 
-        <!-- History View -->
         <div id="historyView" class="view">
             <div class="history-container">
                 <div class="history-controls">
@@ -169,7 +160,6 @@
         </div>
     </main>
 
-    <!-- Install Prompt -->
     <div id="installPrompt" class="install-prompt">
         <div class="install-content">
             <h3>Install Expense Tracker</h3>
@@ -179,13 +169,10 @@
         </div>
     </div>
 
-    <!-- Simple Install Button -->
     <div class="simple-install">
         <button id="simpleInstallBtn" class="simple-install-btn">📱 Install App</button>
     </div>
-    
 
-    <!-- Scripts -->
     <script src="js/app.js"></script>
     <script src="js/service-worker.js"></script>
 </body>
