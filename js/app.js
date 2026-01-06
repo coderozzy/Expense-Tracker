@@ -6,7 +6,9 @@ class ExpenseTracker {
         this.isOnline = navigator.onLine;
         this.deferredPrompt = null;
         this.currentLocation = null;
-        
+        this.lastHistoryCursor = null;
+        this.itemsPerPage = 20;
+
         this.init();
     }
 
@@ -17,9 +19,8 @@ class ExpenseTracker {
             this.setupEventListeners();
             this.setupConnectionMonitoring();
             this.setupInstallPrompt();
-            this.loadExpenses();
             this.updateDashboard();
-            
+
             console.log('Expense Tracker initialized successfully');
         } catch (error) {
             console.error('Failed to initialize Expense Tracker:', error);
@@ -30,23 +31,23 @@ class ExpenseTracker {
     async initDatabase() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open('ExpenseTrackerDB', 1);
-            
+
             request.onerror = () => {
                 reject(new Error('Failed to open database'));
             };
-            
+
             request.onsuccess = () => {
                 this.db = request.result;
                 resolve();
             };
-            
+
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
 
                 if (!db.objectStoreNames.contains('expenses')) {
-                    const expenseStore = db.createObjectStore('expenses', { 
-                        keyPath: 'id', 
-                        autoIncrement: true 
+                    const expenseStore = db.createObjectStore('expenses', {
+                        keyPath: 'id',
+                        autoIncrement: true
                     });
 
                     expenseStore.createIndex('date', 'date', { unique: false });
@@ -91,7 +92,7 @@ class ExpenseTracker {
                 navigator.serviceWorker.addEventListener('message', (event) => {
                     console.log('Message from Service Worker:', event.data);
                 });
-                
+
             } catch (error) {
                 console.error('Service Worker registration failed:', error);
                 this.showMessage('Service Worker registration failed. Offline features may not work.', 'error');
@@ -103,7 +104,7 @@ class ExpenseTracker {
     }
 
     setupEventListeners() {
-        
+
         const dashboardBtn = document.getElementById('dashboardBtn');
         const addExpenseBtn = document.getElementById('addExpenseBtn');
         const historyBtn = document.getElementById('historyBtn');
@@ -116,7 +117,7 @@ class ExpenseTracker {
                     const viewName = btn.id.replace('Btn', '');
                     this.showView(viewName);
                 });
-                
+
                 btn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -145,28 +146,33 @@ class ExpenseTracker {
         document.getElementById('categoryFilter').addEventListener('change', () => this.filterExpenses());
         document.getElementById('dateFilter').addEventListener('change', () => this.filterExpenses());
 
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', () => this.loadHistoryExpenses(false));
+        }
+
         const installBtn = document.getElementById('installBtn');
         const dismissBtn = document.getElementById('dismissInstall');
         const simpleInstallBtn = document.getElementById('simpleInstallBtn');
-        
+
         [installBtn, dismissBtn, simpleInstallBtn].forEach(btn => {
             if (btn) {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     const action = btn.id;
-                    switch(action) {
+                    switch (action) {
                         case 'installBtn': this.installApp(); break;
                         case 'dismissInstall': this.dismissInstallPrompt(); break;
                         case 'simpleInstallBtn': this.simpleInstall(); break;
                     }
                 });
-                
+
                 btn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     const action = btn.id;
-                    switch(action) {
+                    switch (action) {
                         case 'installBtn': this.installApp(); break;
                         case 'dismissInstall': this.dismissInstallPrompt(); break;
                         case 'simpleInstallBtn': this.simpleInstall(); break;
@@ -184,12 +190,12 @@ class ExpenseTracker {
             this.updateConnectionStatus();
             this.syncOfflineData();
         });
-        
+
         window.addEventListener('offline', () => {
             this.isOnline = false;
             this.updateConnectionStatus();
         });
-        
+
         this.updateConnectionStatus();
     }
 
@@ -199,7 +205,7 @@ class ExpenseTracker {
             this.deferredPrompt = e;
             this.showInstallPrompt();
         });
-        
+
         window.addEventListener('appinstalled', () => {
             console.log('PWA was installed');
             this.hideInstallPrompt();
@@ -208,9 +214,9 @@ class ExpenseTracker {
 
     showView(viewName) {
         console.log('Switching to view:', viewName, 'Online:', this.isOnline);
-        
+
         try {
-            
+
             document.querySelectorAll('.view').forEach(view => {
                 view.classList.remove('active');
             });
@@ -221,19 +227,19 @@ class ExpenseTracker {
 
             const targetView = document.getElementById(`${viewName}View`);
             const targetBtn = document.getElementById(`${viewName}Btn`);
-            
+
             if (targetView && targetBtn) {
                 targetView.classList.add('active');
                 targetBtn.classList.add('active');
 
                 setTimeout(() => {
-                    
+
                     if (viewName === 'dashboard') {
                         this.updateDashboard();
                     } else if (viewName === 'history') {
-                        this.loadExpenses();
+                        this.loadHistoryExpenses(true);
                     }
-                    
+
                     console.log('Successfully switched to view:', viewName);
 
                     this.updateConnectionStatus();
@@ -261,22 +267,22 @@ class ExpenseTracker {
             this.showMessage('Please enter a valid amount', 'error');
             return;
         }
-        
+
         if (!description) {
             this.showMessage('Please enter a description', 'error');
             return;
         }
-        
+
         if (!category) {
             this.showMessage('Please select a category', 'error');
             return;
         }
-        
+
         if (!date) {
             this.showMessage('Please select a date', 'error');
             return;
         }
-        
+
         const expense = {
             amount: amount,
             description: description,
@@ -287,21 +293,20 @@ class ExpenseTracker {
             timestamp: new Date().toISOString(),
             offline: !this.isOnline
         };
-        
+
         try {
             await this.saveExpense(expense);
             this.showMessage('Expense added successfully!', 'success');
 
-            await this.loadExpenses();
-            this.updateDashboard();
-            
+            this.showMessage('Expense added successfully!', 'success');
+
             event.target.reset();
             document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('photoPreview').innerHTML = '';
             this.currentLocation = null;
 
             this.showView('dashboard');
-            
+
         } catch (error) {
             console.error('Failed to save expense:', error);
             this.showMessage('Failed to save expense. Please try again.', 'error');
@@ -313,105 +318,231 @@ class ExpenseTracker {
             const transaction = this.db.transaction(['expenses'], 'readwrite');
             const store = transaction.objectStore('expenses');
             const request = store.add(expense);
-            
+
             request.onsuccess = () => {
                 console.log('Expense saved successfully');
                 resolve();
             };
-            
+
             request.onerror = () => {
                 reject(new Error('Failed to save expense'));
             };
         });
     }
 
-    async loadExpenses() {
+    async loadHistoryExpenses(reset = false) {
+        if (reset) {
+            this.lastHistoryCursor = null;
+            document.getElementById('expensesHistoryList').innerHTML = '';
+            document.getElementById('loadMoreBtn').style.display = 'none';
+        }
+
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        const dateFilter = document.getElementById('dateFilter').value;
+        const container = document.getElementById('expensesHistoryList');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+        loadMoreBtn.textContent = 'Loading...';
+        loadMoreBtn.disabled = true;
+
+        try {
+            const expenses = await this.getExpensesFromDB({
+                limit: this.itemsPerPage,
+                startAfter: this.lastHistoryCursor,
+                category: categoryFilter,
+                date: dateFilter
+            });
+
+            if (expenses.length > 0) {
+                this.lastHistoryCursor = expenses[expenses.length - 1].key;
+
+                if (reset || container.querySelector('.no-data')) {
+                    if (reset) container.innerHTML = '';
+                    else {
+                        const noData = container.querySelector('.no-data');
+                        if (noData) noData.remove();
+                    }
+                }
+
+                const html = expenses.map(expense => this.createExpenseHTML(expense)).join('');
+                container.insertAdjacentHTML('beforeend', html);
+            } else if (reset) {
+                container.innerHTML = '<p class="no-data">No expenses found.</p>';
+            }
+
+            if (expenses.length < this.itemsPerPage) {
+                loadMoreBtn.style.display = 'none';
+            } else {
+                loadMoreBtn.style.display = 'block';
+            }
+
+        } catch (error) {
+            console.error('Error loading history:', error);
+            this.showMessage('Failed to load history', 'error');
+        } finally {
+            loadMoreBtn.textContent = 'Load More';
+            loadMoreBtn.disabled = false;
+        }
+    }
+
+    // Helper to fetch with cursor
+    async getExpensesFromDB({ limit, startAfter, category, date }) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['expenses'], 'readonly');
+            const store = transaction.objectStore('expenses');
+            let request;
+            let indexName = 'date';
+
+
+
+            if (category) {
+                indexName = 'category';
+            }
+
+
+
+            const index = store.index(indexName);
+            const expenses = [];
+            let hasSkipped = false;
+            let count = 0;
+
+
+
+            let range = null;
+            if (category) {
+                range = IDBKeyRange.only(category);
+            } else if (date) {
+                // If filtering by specific date
+                range = IDBKeyRange.only(date);
+            }
+
+            const cursorRequest = index.openCursor(range, 'prev');
+
+            cursorRequest.onsuccess = (e) => {
+                const cursor = e.target.result;
+
+                if (cursor) {
+                    let matches = true;
+
+                    if (date && category) {
+                        if (cursor.value.date !== date) matches = false;
+                    }
+
+                    if (matches) {
+                        if (startAfter && !hasSkipped) {
+                            if (cursor.primaryKey === startAfter) {
+                                hasSkipped = true;
+                                cursor.continue();
+                                return;
+                            }
+
+                            if (cursor.primaryKey !== startAfter) {
+                                cursor.continue();
+                                return;
+                            }
+                        } else if (startAfter && !hasSkipped && cursor.primaryKey === startAfter) {
+                            hasSkipped = true;
+                            cursor.continue();
+                            return;
+                        }
+                    }
+
+                    if (matches && (!startAfter || hasSkipped)) {
+                        const val = cursor.value;
+                        val.key = cursor.primaryKey;
+                        expenses.push(val);
+                        count++;
+                    }
+
+                    if (count < limit) {
+                        cursor.continue();
+                    } else {
+                        resolve(expenses);
+                    }
+                } else {
+                    resolve(expenses);
+                }
+            };
+
+            cursorRequest.onerror = () => reject(cursorRequest.error);
+        });
+    }
+
+    async loadRecentExpenses() {
+        const container = document.getElementById('recentExpensesList');
+        container.innerHTML = '<p class="loading-text">Loading...</p>';
+
+        try {
+            const expenses = await this.getExpensesFromDB({ limit: 5 });
+
+            if (expenses.length === 0) {
+                container.innerHTML = '<p class="no-data">No expenses yet. Add your first expense!</p>';
+                return;
+            }
+
+            container.innerHTML = expenses.map(expense => this.createExpenseHTML(expense)).join('');
+
+        } catch (error) {
+            console.error('Error loading recent:', error);
+            container.innerHTML = '<p class="error-text">Failed to load expenses</p>';
+        }
+    }
+
+    async calculateDashboardStats() {
         return new Promise((resolve) => {
             const transaction = this.db.transaction(['expenses'], 'readonly');
             const store = transaction.objectStore('expenses');
-            const request = store.getAll();
-            
-            request.onsuccess = () => {
-                
-                this.expenses = request.result
-                    .filter(expense => {
-                        
-                        return expense && 
-                               expense.description && 
-                               expense.amount && 
-                               expense.category && 
-                               expense.date &&
-                               !isNaN(parseFloat(expense.amount));
-                    })
-                    .sort((a, b) => {
-                        
-                        const dateA = new Date(a.date);
-                        const dateB = new Date(b.date);
-                        return dateB - dateA;
+
+            let total = 0;
+            let monthly = 0;
+            const uniqueCategories = new Set();
+
+            const currentMonth = new Date().toISOString().slice(0, 7);
+
+
+
+            const cursorRequest = store.openCursor();
+
+            cursorRequest.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    const { amount, date, category } = cursor.value;
+                    const numAmount = parseFloat(amount) || 0;
+
+                    total += numAmount;
+
+                    if (date && date.startsWith(currentMonth)) {
+                        monthly += numAmount;
+                    }
+
+                    if (category) uniqueCategories.add(category);
+
+                    cursor.continue();
+                } else {
+                    resolve({
+                        total,
+                        monthly,
+                        categoryCount: uniqueCategories.size
                     });
-                
-                this.displayExpenses();
-                resolve();
-            };
-            
-            request.onerror = () => {
-                console.error('Failed to load expenses');
-                this.expenses = [];
-                this.displayExpenses();
-                resolve();
+                }
             };
         });
     }
 
-    displayExpenses() {
-        const currentView = document.querySelector('.view.active').id;
-        
-        if (currentView === 'dashboardView') {
-            this.displayRecentExpenses();
-        } else if (currentView === 'historyView') {
-            this.displayAllExpenses();
-        }
-    }
 
-    displayRecentExpenses() {
-        const container = document.getElementById('recentExpensesList');
+    displayExpenses() { }
+    displayRecentExpenses() { }
+    displayAllExpenses() { }
+    getFilteredExpenses() { return []; }
 
-        if (!this.expenses || this.expenses.length === 0) {
-            container.innerHTML = '<p class="no-data">No expenses yet. Add your first expense!</p>';
-            return;
-        }
-        
-        const recentExpenses = this.expenses.slice(0, 5);
-        container.innerHTML = recentExpenses.map(expense => this.createExpenseHTML(expense)).join('');
-    }
-
-    displayAllExpenses() {
-        const container = document.getElementById('expensesHistoryList');
-        const filteredExpenses = this.getFilteredExpenses();
-        
-        if (filteredExpenses.length === 0) {
-            container.innerHTML = '<p class="no-data">No expenses found.</p>';
-            return;
-        }
-        
-        container.innerHTML = filteredExpenses.map(expense => this.createExpenseHTML(expense)).join('');
-    }
-
-    getFilteredExpenses() {
-        let filtered = [...this.expenses];
-        
-        const categoryFilter = document.getElementById('categoryFilter').value;
-        const dateFilter = document.getElementById('dateFilter').value;
-        
-        if (categoryFilter) {
-            filtered = filtered.filter(expense => expense.category === categoryFilter);
-        }
-        
-        if (dateFilter) {
-            filtered = filtered.filter(expense => expense.date === dateFilter);
-        }
-        
-        return filtered;
+    escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     createExpenseHTML(expense) {
@@ -424,7 +555,7 @@ class ExpenseTracker {
             health: '🏥',
             other: '📦'
         };
-        
+
         const categoryNames = {
             food: 'Food & Dining',
             transport: 'Transportation',
@@ -438,11 +569,11 @@ class ExpenseTracker {
         let displayDate;
         if (expense.date) {
             try {
-                
+
                 if (typeof expense.date === 'number') {
                     displayDate = new Date(expense.date).toLocaleDateString();
                 } else {
-                    
+
                     displayDate = new Date(expense.date).toLocaleDateString();
                 }
             } catch (error) {
@@ -458,20 +589,20 @@ class ExpenseTracker {
         const categoryEmoji = categoryEmojis[expense.category] || '📦';
         const categoryName = categoryNames[expense.category] || 'Other';
 
-        const locationDisplay = expense.location && expense.location !== 'null' && expense.location !== 'undefined' 
-            ? `<span>📍 ${expense.location}</span>` 
+        const locationDisplay = expense.location && expense.location !== 'null' && expense.location !== 'undefined'
+            ? `<span>📍 ${this.escapeHTML(expense.location)}</span>`
             : '';
 
-        const photoDisplay = expense.photo 
+        const photoDisplay = expense.photo
             ? `<div class="expense-photo">
                  <img src="${expense.photo}" alt="Receipt photo" class="receipt-thumbnail" onclick="showPhotoModal('${expense.photo}')">
-               </div>` 
+               </div>`
             : '';
-        
+
         return `
             <div class="expense-item">
                 <div class="expense-info">
-                    <div class="expense-description">${expense.description || 'No Description'}</div>
+                    <div class="expense-description">${this.escapeHTML(expense.description) || 'No Description'}</div>
                     <div class="expense-meta">
                         <span class="expense-category">${categoryEmoji} ${categoryName}</span>
                         <span>${displayDate}</span>
@@ -485,38 +616,23 @@ class ExpenseTracker {
         `;
     }
 
-    updateDashboard() {
-        if (!this.expenses || this.expenses.length === 0) {
-            document.getElementById('totalExpenses').textContent = '$0.00';
-            document.getElementById('monthlyExpenses').textContent = '$0.00';
-            document.getElementById('categoryCount').textContent = '0';
-            return;
+    async updateDashboard() {
+        this.loadRecentExpenses();
+
+        try {
+            const stats = await this.calculateDashboardStats();
+
+            document.getElementById('totalExpenses').textContent = `$${stats.total.toFixed(2)}`;
+            document.getElementById('monthlyExpenses').textContent = `$${stats.monthly.toFixed(2)}`;
+            document.getElementById('categoryCount').textContent = stats.categoryCount;
+
+        } catch (error) {
+            console.error('Failed to update dashboard stats', error);
         }
-        
-        const totalExpenses = this.expenses.reduce((sum, expense) => {
-            const amount = parseFloat(expense.amount);
-            return sum + (isNaN(amount) ? 0 : amount);
-        }, 0);
-        
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        const monthlyExpenses = this.expenses
-            .filter(expense => expense.date && expense.date.startsWith(currentMonth))
-            .reduce((sum, expense) => {
-                const amount = parseFloat(expense.amount);
-                return sum + (isNaN(amount) ? 0 : amount);
-            }, 0);
-        
-        const categories = new Set(this.expenses
-            .filter(expense => expense.category)
-            .map(expense => expense.category));
-        
-        document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
-        document.getElementById('monthlyExpenses').textContent = `$${monthlyExpenses.toFixed(2)}`;
-        document.getElementById('categoryCount').textContent = categories.size;
     }
 
     filterExpenses() {
-        this.displayAllExpenses();
+        this.loadHistoryExpenses(true);
     }
 
     async getCurrentLocation() {
@@ -524,13 +640,13 @@ class ExpenseTracker {
             this.showMessage('Geolocation is not supported by this browser.', 'error');
             return;
         }
-        
+
         const locationBtn = document.getElementById('getLocationBtn');
         const locationInput = document.getElementById('expenseLocation');
-        
+
         locationBtn.textContent = '⏳';
         locationBtn.disabled = true;
-        
+
         try {
             const position = await this.getCurrentPosition();
             const { latitude, longitude } = position.coords;
@@ -538,9 +654,9 @@ class ExpenseTracker {
             const location = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
             this.currentLocation = location;
             locationInput.value = location;
-            
+
             this.showMessage('Location obtained successfully!', 'success');
-            
+
         } catch (error) {
             console.error('Geolocation error:', error);
             this.showMessage('Failed to get location. Please check permissions.', 'error');
@@ -555,7 +671,7 @@ class ExpenseTracker {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
                 enableHighAccuracy: true,
                 timeout: 10000,
-                maximumAge: 300000 
+                maximumAge: 300000
             });
         });
     }
@@ -563,7 +679,7 @@ class ExpenseTracker {
     handlePhotoUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = (e) => {
             const preview = document.getElementById('photoPreview');
@@ -578,7 +694,7 @@ class ExpenseTracker {
     async getPhotoData() {
         const fileInput = document.getElementById('receiptPhoto');
         if (!fileInput.files[0]) return null;
-        
+
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => resolve(e.target.result);
@@ -591,7 +707,7 @@ class ExpenseTracker {
         const textElement = document.getElementById('connectionText');
 
         this.isOnline = navigator.onLine;
-        
+
         if (this.isOnline) {
             statusElement.className = 'connection-status online';
             textElement.textContent = 'You\'re online';
@@ -599,25 +715,25 @@ class ExpenseTracker {
             statusElement.className = 'connection-status offline';
             textElement.textContent = 'You\'re offline - data will sync when connected';
         }
-        
+
         console.log('Connection status updated:', this.isOnline ? 'Online' : 'Offline');
     }
 
     async syncOfflineData() {
         if (!this.isOnline) return;
-        
+
         try {
-            
+
             console.log('Syncing offline data...');
 
             const transaction = this.db.transaction(['expenses'], 'readwrite');
             const store = transaction.objectStore('expenses');
             const request = store.getAll();
-            
+
             request.onsuccess = () => {
                 const expenses = request.result;
                 const offlineExpenses = expenses.filter(expense => expense.offline);
-                
+
                 if (offlineExpenses.length > 0) {
                     this.showMessage(`${offlineExpenses.length} offline expenses synced!`, 'success');
 
@@ -627,7 +743,7 @@ class ExpenseTracker {
                     });
                 }
             };
-            
+
         } catch (error) {
             console.error('Failed to sync offline data:', error);
         }
@@ -650,17 +766,17 @@ class ExpenseTracker {
 
     async installApp() {
         if (!this.deferredPrompt) return;
-        
+
         this.deferredPrompt.prompt();
         const { outcome } = await this.deferredPrompt.userChoice;
-        
+
         console.log(`User response to the install prompt: ${outcome}`);
         this.deferredPrompt = null;
         this.hideInstallPrompt();
     }
 
     simpleInstall() {
-        
+
         if (this.deferredPrompt) {
             this.installApp();
             return;
@@ -668,7 +784,7 @@ class ExpenseTracker {
 
         const userAgent = navigator.userAgent.toLowerCase();
         let message = '';
-        
+
         if (userAgent.includes('safari') && userAgent.includes('mobile')) {
             message = '📱 Safari: Tap Share button (📤) → "Add to Home Screen"';
         } else if (userAgent.includes('chrome')) {
@@ -678,7 +794,7 @@ class ExpenseTracker {
         } else {
             message = '📱 Look for "Add to Home Screen" or "Install" option in browser menu';
         }
-        
+
         this.showMessage(message, 'info');
 
         setTimeout(() => {
@@ -690,7 +806,7 @@ class ExpenseTracker {
     }
 
     showMessage(message, type = 'info') {
-        
+
         const existingMessages = document.querySelectorAll('.message');
         existingMessages.forEach(msg => msg.remove());
 
@@ -714,13 +830,13 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const view = urlParams.get('view');
-    
+
     if (view && window.expenseTracker) {
         window.expenseTracker.showView(view);
     }
 });
 
-window.clearExpenseDatabase = async function() {
+window.clearExpenseDatabase = async function () {
     if (confirm('Are you sure you want to clear all expense data? This cannot be undone.')) {
         try {
             const request = indexedDB.deleteDatabase('ExpenseTrackerDB');
@@ -737,8 +853,8 @@ window.clearExpenseDatabase = async function() {
     }
 };
 
-window.showPhotoModal = function(photoSrc) {
-    
+window.showPhotoModal = function (photoSrc) {
+
     let modal = document.getElementById('photoModal');
     if (!modal) {
         modal = document.createElement('div');
@@ -755,7 +871,7 @@ window.showPhotoModal = function(photoSrc) {
         modal.querySelector('.photo-modal-close').onclick = () => {
             modal.style.display = 'none';
         };
-        
+
         modal.onclick = (e) => {
             if (e.target === modal) {
                 modal.style.display = 'none';

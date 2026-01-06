@@ -736,7 +736,7 @@ button, .nav-btn, .btn {
 
 .simple-install {
     position: fixed;
-    top: 1rem;
+    top: 4rem;
     right: 1rem;
     z-index: 1000;
 }
