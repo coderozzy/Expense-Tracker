@@ -1,9 +1,9 @@
 
 
-const CACHE_NAME = 'expense-tracker-v1.0.7';
-const STATIC_CACHE = 'expense-tracker-static-v1.0.4';
-const DYNAMIC_CACHE = 'expense-tracker-dynamic-v1.0.4';
-const IMAGE_CACHE = 'expense-tracker-images-v1.0.4';
+const CACHE_NAME = 'expense-tracker-v1.0.8';
+const STATIC_CACHE = 'expense-tracker-static-v1.0.5';
+const DYNAMIC_CACHE = 'expense-tracker-dynamic-v1.0.5';
+const IMAGE_CACHE = 'expense-tracker-images-v1.0.5';
 
 const STATIC_ASSETS = [
     '/',

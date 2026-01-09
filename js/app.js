@@ -530,10 +530,7 @@ class ExpenseTracker {
     }
 
 
-    displayExpenses() { }
-    displayRecentExpenses() { }
-    displayAllExpenses() { }
-    getFilteredExpenses() { return []; }
+
 
     escapeHTML(str) {
         if (!str) return '';
