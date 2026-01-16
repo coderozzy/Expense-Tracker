@@ -22,19 +22,11 @@
     "camera",
     "responsive"
   ],
-  "author": "Your Name",
+  "author": "Oguzhan",
   "license": "MIT",
   "devDependencies": {
     "serve": "^14.2.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yourusername/expense-tracker-pwa.git"
-  },
-  "bugs": {
-    "url": "https://github.com/yourusername/expense-tracker-pwa/issues"
-  },
-  "homepage": "https://github.com/yourusername/expense-tracker-pwa#readme",
   "engines": {
     "node": ">=14.0.0"
   }
