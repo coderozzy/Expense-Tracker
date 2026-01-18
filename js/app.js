@@ -55,10 +55,6 @@ class ExpenseTracker {
                     expenseStore.createIndex('amount', 'amount', { unique: false });
                     expenseStore.createIndex('offline', 'offline', { unique: false });
                 }
-
-                if (!db.objectStoreNames.contains('settings')) {
-                    db.createObjectStore('settings', { keyPath: 'key' });
-                }
             };
         });
     }
@@ -153,9 +149,8 @@ class ExpenseTracker {
 
         const installBtn = document.getElementById('installBtn');
         const dismissBtn = document.getElementById('dismissInstall');
-        const simpleInstallBtn = document.getElementById('simpleInstallBtn');
 
-        [installBtn, dismissBtn, simpleInstallBtn].forEach(btn => {
+        [installBtn, dismissBtn].forEach(btn => {
             if (btn) {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -164,7 +159,6 @@ class ExpenseTracker {
                     switch (action) {
                         case 'installBtn': this.installApp(); break;
                         case 'dismissInstall': this.dismissInstallPrompt(); break;
-                        case 'simpleInstallBtn': this.simpleInstall(); break;
                     }
                 });
 
@@ -175,7 +169,6 @@ class ExpenseTracker {
                     switch (action) {
                         case 'installBtn': this.installApp(); break;
                         case 'dismissInstall': this.dismissInstallPrompt(); break;
-                        case 'simpleInstallBtn': this.simpleInstall(); break;
                     }
                 });
             }
@@ -772,35 +765,7 @@ class ExpenseTracker {
         this.hideInstallPrompt();
     }
 
-    simpleInstall() {
 
-        if (this.deferredPrompt) {
-            this.installApp();
-            return;
-        }
-
-        const userAgent = navigator.userAgent.toLowerCase();
-        let message = '';
-
-        if (userAgent.includes('safari') && userAgent.includes('mobile')) {
-            message = '📱 Safari: Tap Share button (📤) → "Add to Home Screen"';
-        } else if (userAgent.includes('chrome')) {
-            message = '📱 Chrome: Menu (⋮) → "Install app" or look for install icon (⬇️) in address bar';
-        } else if (userAgent.includes('firefox')) {
-            message = '📱 Firefox: Menu (⋮) → "Install"';
-        } else {
-            message = '📱 Look for "Add to Home Screen" or "Install" option in browser menu';
-        }
-
-        this.showMessage(message, 'info');
-
-        setTimeout(() => {
-            const installBtn = document.getElementById('simpleInstallBtn');
-            if (installBtn) {
-                installBtn.style.display = 'none';
-            }
-        }, 5000);
-    }
 
     showMessage(message, type = 'info') {
 
