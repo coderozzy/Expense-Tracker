@@ -1,6 +1,6 @@
 
 
-const CACHE_NAME = 'expense-tracker-v1.0.8';
+const CACHE_NAME = 'expense-tracker-v1.0.9';
 const STATIC_CACHE = 'expense-tracker-static-v1.0.5';
 const DYNAMIC_CACHE = 'expense-tracker-dynamic-v1.0.5';
 const IMAGE_CACHE = 'expense-tracker-images-v1.0.5';
@@ -11,7 +11,7 @@ const STATIC_ASSETS = [
     '/manifest.json',
     '/styles/main.css',
     '/js/app.js',
-    '/js/service-worker.js',
+    '/service-worker.js',
     '/icons/icon-192x192.png',
     '/icons/icon-512x512.png',
     '/icons/icon-32x32.png',
@@ -19,11 +19,7 @@ const STATIC_ASSETS = [
     '/icons/icon-144x144.png'
 ];
 
-const CACHE_STRATEGIES = {
-    CACHE_FIRST: 'cache-first',
-    NETWORK_FIRST: 'network-first',
-    STALE_WHILE_REVALIDATE: 'stale-while-revalidate'
-};
+
 
 self.addEventListener('install', (event) => {
     console.log('Service Worker: Installing...');
@@ -93,8 +89,7 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(cacheFirstStrategy(request));
     } else if (isImageRequest(request)) {
         event.respondWith(imageCacheStrategy(request));
-    } else if (isAPIRequest(request)) {
-        event.respondWith(networkFirstStrategy(request));
+
     } else {
         event.respondWith(staleWhileRevalidateStrategy(request));
     }
@@ -153,11 +148,7 @@ function isImageRequest(request) {
     return url.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
 }
 
-function isAPIRequest(request) {
-    const url = new URL(request.url);
-    return url.pathname.startsWith('/api/') ||
-        url.hostname.includes('api');
-}
+
 
 async function cacheFirstStrategy(request) {
     try {
@@ -195,38 +186,7 @@ async function cacheFirstStrategy(request) {
     }
 }
 
-async function networkFirstStrategy(request) {
-    try {
-        const networkResponse = await fetch(request);
 
-        if (networkResponse.ok) {
-            const cache = await caches.open(DYNAMIC_CACHE);
-            cache.put(request, networkResponse.clone());
-        }
-
-        return networkResponse;
-    } catch (error) {
-        console.log('Service Worker: Network failed, trying cache (network-first)', request.url);
-
-        const cachedResponse = await caches.match(request);
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-
-        if (request.mode === 'navigate') {
-            const cachedIndex = await caches.match('/index.html');
-            if (cachedIndex) {
-                console.log('Service Worker: Serving cached index.html for offline navigation');
-                return cachedIndex;
-            }
-        }
-
-        return new Response('Offline - Data not available', {
-            status: 503,
-            statusText: 'Service Unavailable'
-        });
-    }
-}
 
 async function staleWhileRevalidateStrategy(request) {
     const cache = await caches.open(DYNAMIC_CACHE);
@@ -288,76 +248,7 @@ async function cleanImageCache() {
     }
 }
 
-self.addEventListener('sync', (event) => {
-    console.log('Service Worker: Background sync triggered', event.tag);
 
-    if (event.tag === 'expense-sync') {
-        event.waitUntil(syncExpenses());
-    }
-});
-
-async function syncExpenses() {
-    try {
-        const offlineExpenses = await getOfflineExpenses();
-
-        if (offlineExpenses.length > 0) {
-            console.log('Service Worker: Syncing offline expenses', offlineExpenses.length);
-
-            for (const expense of offlineExpenses) {
-                console.log('Syncing expense:', expense);
-            }
-
-            await clearOfflineExpenses();
-        }
-    } catch (error) {
-        console.error('Service Worker: Failed to sync expenses', error);
-    }
-}
-
-async function getOfflineExpenses() {
-    return new Promise((resolve) => {
-        const request = indexedDB.open('ExpenseTrackerDB', 1);
-
-        request.onsuccess = () => {
-            const db = request.result;
-            const transaction = db.transaction(['expenses'], 'readonly');
-            const store = transaction.objectStore('expenses');
-            const getAllRequest = store.getAll();
-
-            getAllRequest.onsuccess = () => {
-                resolve(getAllRequest.result.filter(expense => expense.offline));
-            };
-        };
-
-        request.onerror = () => resolve([]);
-    });
-}
-
-async function clearOfflineExpenses() {
-    return new Promise((resolve) => {
-        const request = indexedDB.open('ExpenseTrackerDB', 1);
-
-        request.onsuccess = () => {
-            const db = request.result;
-            const transaction = db.transaction(['expenses'], 'readwrite');
-            const store = transaction.objectStore('expenses');
-            const index = store.index('offline');
-            const clearRequest = index.openCursor();
-
-            clearRequest.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    cursor.delete();
-                    cursor.continue();
-                } else {
-                    resolve();
-                }
-            };
-        };
-
-        request.onerror = () => resolve();
-    });
-}
 
 
 
@@ -369,18 +260,9 @@ self.addEventListener('message', (event) => {
         self.skipWaiting();
     }
 
-    if (event.data && event.data.type === 'GET_VERSION') {
-        event.ports[0].postMessage({ version: CACHE_NAME });
-    }
+
 });
 
-self.addEventListener('activate', (event) => {
-    console.log('Service Worker: Activating new version');
-    event.waitUntil(
-        self.clients.claim().then(() => {
-            console.log('Service Worker: Now controlling all clients');
-        })
-    );
-});
+
 
 console.log('Service Worker: Script loaded successfully');

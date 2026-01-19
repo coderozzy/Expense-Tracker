@@ -63,7 +63,7 @@ class ExpenseTracker {
         if ('serviceWorker' in navigator) {
             try {
                 console.log('Registering Service Worker...');
-                const registration = await navigator.serviceWorker.register('/js/service-worker.js');
+                const registration = await navigator.serviceWorker.register('/service-worker.js');
                 console.log('Service Worker registered successfully:', registration);
 
                 if (navigator.serviceWorker.controller) {
