@@ -2,7 +2,6 @@
 
 const CACHE_NAME = 'expense-tracker-v1.0.9';
 const STATIC_CACHE = 'expense-tracker-static-v1.0.5';
-const DYNAMIC_CACHE = 'expense-tracker-dynamic-v1.0.5';
 const IMAGE_CACHE = 'expense-tracker-images-v1.0.5';
 
 const STATIC_ASSETS = [
@@ -12,11 +11,11 @@ const STATIC_ASSETS = [
     '/styles/main.css',
     '/js/app.js',
     '/service-worker.js',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png',
-    '/icons/icon-32x32.png',
-    '/icons/icon-16x16.png',
-    '/icons/icon-144x144.png'
+    '/icons/icon-192x192.svg',
+    '/icons/icon-512x512.svg',
+    '/icons/icon-32x32.svg',
+    '/icons/icon-16x16.svg',
+    '/icons/icon-144x144.svg'
 ];
 
 
@@ -49,7 +48,6 @@ self.addEventListener('activate', (event) => {
                 return Promise.all(
                     cacheNames.map((cacheName) => {
                         if (cacheName !== STATIC_CACHE &&
-                            cacheName !== DYNAMIC_CACHE &&
                             cacheName !== IMAGE_CACHE) {
                             console.log('Service Worker: Deleting old cache', cacheName);
                             return caches.delete(cacheName);
@@ -91,7 +89,8 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(imageCacheStrategy(request));
 
     } else {
-        event.respondWith(staleWhileRevalidateStrategy(request));
+        // Fallback for non-cachable requests
+        return;
     }
 });
 
@@ -184,24 +183,6 @@ async function cacheFirstStrategy(request) {
             statusText: 'Service Unavailable'
         });
     }
-}
-
-
-
-async function staleWhileRevalidateStrategy(request) {
-    const cache = await caches.open(DYNAMIC_CACHE);
-    const cachedResponse = await cache.match(request);
-
-    const fetchPromise = fetch(request).then((networkResponse) => {
-        if (networkResponse.ok) {
-            cache.put(request, networkResponse.clone());
-        }
-        return networkResponse;
-    }).catch(() => {
-        return cachedResponse;
-    });
-
-    return cachedResponse || fetchPromise;
 }
 
 async function imageCacheStrategy(request) {
