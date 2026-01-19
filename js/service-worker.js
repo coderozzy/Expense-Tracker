@@ -1,6 +1,6 @@
 
 
-const CACHE_NAME = 'expense-tracker-v1.0.14';
+const CACHE_NAME = 'expense-tracker-v1.0.8';
 const STATIC_CACHE = 'expense-tracker-static-v1.0.5';
 const DYNAMIC_CACHE = 'expense-tracker-dynamic-v1.0.5';
 const IMAGE_CACHE = 'expense-tracker-images-v1.0.5';
@@ -359,48 +359,7 @@ async function clearOfflineExpenses() {
     });
 }
 
-self.addEventListener('push', (event) => {
-    console.log('Service Worker: Push notification received');
 
-    const options = {
-        body: event.data ? event.data.text() : 'New expense reminder',
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
-        vibrate: [100, 50, 100],
-        data: {
-            dateOfArrival: Date.now(),
-            primaryKey: 1
-        },
-        actions: [
-            {
-                action: 'explore',
-                title: 'View Expenses',
-                icon: '/icons/icon-192x192.png'
-            },
-            {
-                action: 'close',
-                title: 'Close',
-                icon: '/icons/icon-192x192.png'
-            }
-        ]
-    };
-
-    event.waitUntil(
-        self.registration.showNotification('Expense Tracker', options)
-    );
-});
-
-self.addEventListener('notificationclick', (event) => {
-    console.log('Service Worker: Notification clicked');
-
-    event.notification.close();
-
-    if (event.action === 'explore') {
-        event.waitUntil(
-            clients.openWindow('/')
-        );
-    }
-});
 
 self.addEventListener('message', (event) => {
     console.log('Service Worker: Message received', event.data);

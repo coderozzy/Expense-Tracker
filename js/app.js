@@ -789,31 +789,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.expenseTracker = new ExpenseTracker();
 });
 
-window.addEventListener('load', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const view = urlParams.get('view');
 
-    if (view && window.expenseTracker) {
-        window.expenseTracker.showView(view);
-    }
-});
 
-window.clearExpenseDatabase = async function () {
-    if (confirm('Are you sure you want to clear all expense data? This cannot be undone.')) {
-        try {
-            const request = indexedDB.deleteDatabase('ExpenseTrackerDB');
-            request.onsuccess = () => {
-                alert('Database cleared successfully. Page will reload.');
-                location.reload();
-            };
-            request.onerror = () => {
-                alert('Failed to clear database.');
-            };
-        } catch (error) {
-            alert('Error clearing database: ' + error.message);
-        }
-    }
-};
+
 
 window.showPhotoModal = function (photoSrc) {
 
