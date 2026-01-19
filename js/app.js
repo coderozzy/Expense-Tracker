@@ -290,9 +290,6 @@ class ExpenseTracker {
         try {
             await this.saveExpense(expense);
             this.showMessage('Expense added successfully!', 'success');
-
-            this.showMessage('Expense added successfully!', 'success');
-
             event.target.reset();
             document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('photoPreview').innerHTML = '';
@@ -378,87 +375,68 @@ class ExpenseTracker {
         }
     }
 
-    // Helper to fetch with cursor
     async getExpensesFromDB({ limit, startAfter, category, date }) {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(['expenses'], 'readonly');
             const store = transaction.objectStore('expenses');
-            let request;
-            let indexName = 'date';
 
-
-
-            if (category) {
-                indexName = 'category';
-            }
-
-
-
+            const indexName = category ? 'category' : 'date';
             const index = store.index(indexName);
-            const expenses = [];
-            let hasSkipped = false;
-            let count = 0;
 
+            const keyRange = this.buildKeyRange(category, date);
+            const results = [];
+            let skippedPastCursor = !startAfter;
 
+            const cursorRequest = index.openCursor(keyRange, 'prev');
 
-            let range = null;
-            if (category) {
-                range = IDBKeyRange.only(category);
-            } else if (date) {
-                // If filtering by specific date
-                range = IDBKeyRange.only(date);
-            }
+            cursorRequest.onsuccess = (event) => {
+                const cursor = event.target.result;
 
-            const cursorRequest = index.openCursor(range, 'prev');
+                if (!cursor) {
+                    resolve(results);
+                    return;
+                }
 
-            cursorRequest.onsuccess = (e) => {
-                const cursor = e.target.result;
+                const expense = cursor.value;
+                const primaryKey = cursor.primaryKey;
 
-                if (cursor) {
-                    let matches = true;
+                const matchesCombinedFilter = !category || !date || expense.date === date;
+                if (!matchesCombinedFilter) {
+                    cursor.continue();
+                    return;
+                }
 
-                    if (date && category) {
-                        if (cursor.value.date !== date) matches = false;
+                if (!skippedPastCursor) {
+                    if (primaryKey === startAfter) {
+                        skippedPastCursor = true;
                     }
+                    cursor.continue();
+                    return;
+                }
 
-                    if (matches) {
-                        if (startAfter && !hasSkipped) {
-                            if (cursor.primaryKey === startAfter) {
-                                hasSkipped = true;
-                                cursor.continue();
-                                return;
-                            }
+                expense.key = primaryKey;
+                results.push(expense);
 
-                            if (cursor.primaryKey !== startAfter) {
-                                cursor.continue();
-                                return;
-                            }
-                        } else if (startAfter && !hasSkipped && cursor.primaryKey === startAfter) {
-                            hasSkipped = true;
-                            cursor.continue();
-                            return;
-                        }
-                    }
-
-                    if (matches && (!startAfter || hasSkipped)) {
-                        const val = cursor.value;
-                        val.key = cursor.primaryKey;
-                        expenses.push(val);
-                        count++;
-                    }
-
-                    if (count < limit) {
-                        cursor.continue();
-                    } else {
-                        resolve(expenses);
-                    }
+                const hasMoreCapacity = results.length < limit;
+                if (hasMoreCapacity) {
+                    cursor.continue();
                 } else {
-                    resolve(expenses);
+                    resolve(results);
                 }
             };
 
             cursorRequest.onerror = () => reject(cursorRequest.error);
         });
+    }
+
+    buildKeyRange(category, date) {
+        if (category) {
+            return IDBKeyRange.only(category);
+        }
+        if (date) {
+            return IDBKeyRange.only(date);
+        }
+        return null;
     }
 
     async loadRecentExpenses() {
@@ -491,9 +469,6 @@ class ExpenseTracker {
             const uniqueCategories = new Set();
 
             const currentMonth = new Date().toISOString().slice(0, 7);
-
-
-
             const cursorRequest = store.openCursor();
 
             cursorRequest.onsuccess = (e) => {
@@ -521,10 +496,6 @@ class ExpenseTracker {
             };
         });
     }
-
-
-
-
     escapeHTML(str) {
         if (!str) return '';
         return String(str)
